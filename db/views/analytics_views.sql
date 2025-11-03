@@ -1,0 +1,59 @@
+-- Library Management System Views
+-- Author: Mitesh Kumar Anshu
+-- Module: Analytics snapshots that keep the desk team informed
+
+SET search_path TO library_app;
+
+-- Daily overdue list shared on the library WhatsApp group
+CREATE OR REPLACE VIEW vw_overdue_loans AS
+SELECT l.loan_id,
+       l.member_id,
+       m.first_name,
+       m.last_name,
+       m.email,
+       bc.barcode,
+       b.title,
+       l.checkout_date,
+       l.due_date,
+       (CURRENT_DATE - l.due_date) AS days_overdue
+FROM loans l
+JOIN members m ON m.member_id = l.member_id
+JOIN book_copies bc ON bc.copy_id = l.copy_id
+JOIN books b ON b.book_id = bc.book_id
+WHERE l.status IN ('ACTIVE','OVERDUE')
+  AND l.due_date < CURRENT_DATE
+  AND l.returned_date IS NULL;
+
+-- Inventory view used by campus teams to track copies
+CREATE OR REPLACE VIEW vw_inventory_summary AS
+SELECT b.book_id,
+       b.isbn,
+       b.title,
+       COUNT(c.copy_id) AS total_copies,
+       COUNT(c.copy_id) FILTER (WHERE c.status = 'AVAILABLE') AS available_copies,
+       COUNT(c.copy_id) FILTER (WHERE c.status = 'LOANED') AS loaned_copies,
+       COUNT(c.copy_id) FILTER (WHERE c.status = 'MAINTENANCE') AS maintenance_copies,
+       COUNT(c.copy_id) FILTER (WHERE c.status = 'LOST') AS lost_copies
+FROM books b
+LEFT JOIN book_copies c ON c.book_id = b.book_id
+GROUP BY b.book_id, b.isbn, b.title;
+
+-- Member view used by counsellors while talking to students
+CREATE OR REPLACE VIEW vw_member_activity AS
+SELECT m.member_id,
+       m.first_name,
+       m.last_name,
+       m.card_number,
+       m.status,
+       (SELECT COUNT(*)
+        FROM loans l
+        WHERE l.member_id = m.member_id
+          AND l.status IN ('ACTIVE','OVERDUE')) AS active_loans,
+       (SELECT COUNT(*)
+        FROM loans l
+        WHERE l.member_id = m.member_id) AS lifetime_loans,
+       (SELECT COALESCE(SUM(amount), 0)
+        FROM loan_fees f
+        WHERE f.member_id = m.member_id
+          AND f.status IN ('UNPAID','PARTIAL')) AS outstanding_fees
+FROM members m;
