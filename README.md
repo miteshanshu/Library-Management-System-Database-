@@ -1,313 +1,305 @@
-# Library Management System - RBAC Backend
-![Node.js](https://img.shields.io/badge/Node.js-16+-green)
-![Express](https://img.shields.io/badge/Express.js-Backend-black)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-12+-blue)
-![JWT](https://img.shields.io/badge/Auth-JWT-orange)
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow)
-![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen)
-![Status](https://img.shields.io/badge/Status-Active-success)
-Complete Role-Based Access Control (RBAC) backend for the Library Management System with PostgreSQL.
+# Library Management System - Complete Project
 
-## Overview
+A comprehensive **Role-Based Access Control (RBAC) library management system** with PostgreSQL database and Node.js/Express REST API backend.
 
-This backend implements a three-tier role-based access control system:
-- **Admin**: Full system management and oversight
-- **Librarian**: Circulation operations and daily management
-- **Student**: Self-service borrowing and personal account management
+## 🎯 Project Overview
 
-## Features
+A production-ready library management platform supporting three user roles:
+- **Admin**: System management, analytics, user oversight
+- **Librarian**: Daily operations, inventory management, circulation
+- **Student**: Self-service borrowing, account management, book search
 
-✅ JWT-based authentication  
-✅ Role-based authorization middleware  
-✅ PostgreSQL integration with stored procedures  
-✅ Comprehensive RBAC implementation  
-✅ Error handling and validation  
-✅ RESTful API design  
+## 📁 Project Structure
 
-## 🏗️ System Architecture
+```
+library-management/
+│
+├── backend/                        # Node.js/Express REST API
+│   ├── src/
+│   │   ├── config/                # Environment & database configuration
+│   │   ├── controllers/           # Request handlers for each role
+│   │   ├── middleware/            # Auth & role-based access control
+│   │   ├── routes/                # API endpoint definitions
+│   │   ├── services/              # Business logic & utilities
+│   │   ├── utils/                 # Helper functions
+│   │   ├── app.js                 # Express app setup
+│   │   └── server.js              # Server entry point
+│   ├── tests/                     # E2E tests (Playwright)
+│   ├── .env.example               # Environment template
+│   ├── package.json               # Dependencies & scripts
+│   └── README.md                  # Backend documentation
+│
+├── db/                             # PostgreSQL database layer
+│   ├── schema/                    # Table definitions & initialization
+│   │   ├── 00_init_schema.sql     # Core tables (users, books, loans, fees)
+│   │   ├── 01_constraints_indexes.sql  # Constraints & indexes
+│   │   ├── 02_users_and_auth.sql  # User authentication setup
+│   │   └── 07_fuzzy_search_indexes.sql # Search optimization
+│   ├── procedures/                # Stored procedures
+│   │   ├── checkout_and_return.sql
+│   │   └── overdue_and_fees.sql
+│   ├── functions/                 # SQL functions
+│   │   └── fn_verify_user_credentials.sql
+│   ├── admin/                     # Admin-specific SQL
+│   │   ├── admin_functions.sql
+│   │   └── admin_views.sql
+│   ├── views/                     # Database views for analytics
+│   │   ├── analytics_views.sql
+│   │   └── vw_overdue_loans.sql
+│   ├── reports/                   # Report generation queries
+│   │   └── inventory_and_member_reports.sql
+│   └── seeds/                     # Sample data for testing
+│       └── sample_data.sql
+│
+├── .vscode/                        # VS Code settings
+├── README.md                       # This file
+└── LICENSE
 
-```plaintext
-                 ┌────────────────────────────┐
-                 │        Frontend App        │
-                 │ (React, Next.js, Mobile)   │
-                 └──────────────┬─────────────┘
-                                │ REST API
-                                ▼
-        ┌─────────────────────────────────────────────────┐
-        │                Express Backend                   │
-        │─────────────────────────────────────────────────│
-        │  Routing Layer                                   │
-        │   - auth.routes.js                               │
-        │   - admin.routes.js                              │
-        │   - librarian.routes.js                          │
-        │   - student.routes.js                            │
-        │   - circulation.routes.js                        │
-        │   - reports.routes.js                            │
-        │-------------------------------------------------│
-        │  Middleware                                      │
-        │   - JWT Authentication                           │
-        │   - Role Authorization                           │
-        │-------------------------------------------------│
-        │  Controllers                                     │
-        │   - Auth / Admin / Librarian / Student           │
-        │   - Circulation / Reports                        │
-        │-------------------------------------------------│
-        │  Database Layer                                  │
-        │   - PostgreSQL (library_app schema)              │
-        │   - Stored Procedures & Functions                │
-        └───────────────────────────────┬──────────────────┘
-                                        │
-                                        ▼
-                          ┌─────────────────────────┐
-                          │     PostgreSQL DB       │
-                          │  Users / Books / Loans  │
-                          │  Copies / Alerts / Fees │
-                          └─────────────────────────┘
-                          
-## Installation
-
-### Prerequisites
-- Node.js 14+ and npm
-- PostgreSQL 12+
-- Existing library_app schema with tables and functions
-
-### Steps
-
-1. Install dependencies:
-```bash
-npm install
 ```
 
-2. Create `.env` file from `.env.example`:
+## 🚀 Quick Start
+
+### Prerequisites
+
+- **PostgreSQL** 12 or higher
+- **Node.js** 14+ and npm
+- **Git** (optional)
+
+### 1️⃣ Database Setup
+
+Initialize PostgreSQL database:
+
 ```bash
+# Connect to PostgreSQL
+psql -U postgres
+
+# Create database
+CREATE DATABASE library_db;
+
+# Run initialization scripts (in order)
+psql -U postgres -d library_db -f db/schema/00_init_schema.sql
+psql -U postgres -d library_db -f db/schema/01_constraints_indexes.sql
+psql -U postgres -d library_db -f db/schema/02_users_and_auth.sql
+psql -U postgres -d library_db -f db/schema/07_fuzzy_search_indexes.sql
+
+# Load stored procedures and functions
+psql -U postgres -d library_db -f db/procedures/checkout_and_return.sql
+psql -U postgres -d library_db -f db/procedures/overdue_and_fees.sql
+psql -U postgres -d library_db -f db/functions/fn_verify_user_credentials.sql
+
+# Load admin functions and views
+psql -U postgres -d library_db -f db/admin/admin_functions.sql
+psql -U postgres -d library_db -f db/admin/admin_views.sql
+
+# Load additional views and reports
+psql -U postgres -d library_db -f db/views/analytics_views.sql
+psql -U postgres -d library_db -f db/views/vw_overdue_loans.sql
+psql -U postgres -d library_db -f db/reports/inventory_and_member_reports.sql
+
+# (Optional) Load sample data
+psql -U postgres -d library_db -f db/seeds/sample_data.sql
+```
+
+### 2️⃣ Backend Setup
+
+```bash
+# Navigate to backend directory
+cd backend
+
+# Install dependencies
+npm install
+
+# Create environment file
 cp .env.example .env
 ```
 
-3. Configure environment variables in `.env`:
+Edit `backend/.env` with your configuration:
+
 ```env
 PORT=5000
 NODE_ENV=development
-JWT_SECRET=your-secret-key
+
+JWT_SECRET=your-super-secret-jwt-key-here
+JWT_EXPIRY=24h
+
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=library_db
 DB_USER=postgres
-DB_PASSWORD=your_password
+DB_PASSWORD=your_postgres_password
 DB_SCHEMA=library_app
 ```
 
-4. Start the server:
-```bash
-npm start
-```
+### 3️⃣ Run the Application
 
-For development with auto-reload:
 ```bash
+# Start development server with hot reload
 npm run dev
+
+# Server runs on http://localhost:5000
 ```
 
-## API Endpoints
+## 📖 API Documentation
 
-### Authentication (`/api/auth`)
-- `POST /login` - User login
-- `POST /register` - Student registration
-- `GET /me` - Get current user profile (requires auth)
+### Authentication Endpoints
+- `POST /api/auth/login` - User login
+- `POST /api/auth/register` - User registration
 
-### Admin (`/api/admin`)
-- `POST /librarians` - Create librarian
-- `PATCH /librarians/:user_id` - Activate/deactivate librarian
-- `GET /users` - Get all users
-- `GET /login-list` - Get login activity list
-- `POST /books` - Add new book
-- `PATCH /books/:book_id` - Edit book details
-- `DELETE /books/:book_id` - Delete book
-- `POST /book-copies` - Add book copy
-- `PATCH /book-copies/:copy_id/status` - Update copy status
-- `PATCH /book-copies/:copy_id/location` - Set book location
-- `POST /membership-types` - Manage membership types
-- `PATCH /members/:member_id/override` - Override member status
-- `POST /fees/:fee_id/waive` - Waive fees
-- `POST /loans/:loan_id/force-close` - Force close loan
+### Admin Routes (`/api/admin/*`)
+- User management
+- System analytics
+- Configuration management
 
-### Librarian (`/api/librarian`)
-- `GET /students/search` - Search student by card or email
-- `GET /students/:member_id/loans` - View student loans
-- `GET /students/:member_id/overdue-loans` - View overdue loans
-- `GET /students/:member_id/fees` - View student fees
-- `GET /students/:member_id/alerts` - View student alerts
-- `GET /book-copies/:copy_id` - View copy status
-- `PATCH /book-copies/:copy_id/mark-available` - Mark copy available
-- `POST /alerts/generate-overdue` - Generate overdue alerts
-- `PATCH /alerts/:alert_id/resolve` - Mark alert resolved
-- `GET /books` - View books
-- `GET /books/:book_id/copies` - View book copies
-- `POST /scan-barcode` - Scan barcode
+### Librarian Routes (`/api/librarian/*`)
+- Inventory management
+- Circulation operations
+- Member management
 
-### Student (`/api/student`)
-- `GET /my-loans` - Get personal loans
-- `GET /my-overdue-loans` - Get overdue loans
-- `GET /my-fees` - Get personal fees
-- `GET /my-alerts` - Get personal alerts
-- `GET /payment-history` - Get payment history
-- `GET /browse-books` - Browse library books
-- `GET /books/:book_id` - Get book details
-- `GET /books/:book_id/available-copies` - Check available copies
+### Student Routes (`/api/student/*`)
+- My borrowing history
+- Available books
+- Account settings
+- Book renewals
 
-### Circulation (`/api/circulation`) (Admin/Librarian only)
-- `POST /checkout` - Checkout book
-- `POST /return` - Return book
-- `GET /loans/:loan_id` - Get loan details
-- `GET /member/:member_id/loans` - Get member loans
-- `GET /member/:member_id/active-loans` - Get active loans
-- `GET /copy/:copy_id/history` - Get copy history
+### Circulation Routes (`/api/circulation/*`)
+- Checkout books
+- Return books
+- Manage renewals
+- Track overdue items
 
-### Reports (`/api/reports`) (Admin only)
-- `GET /overdue` - Overdue report
-- `GET /circulation` - Circulation report
-- `GET /inventory` - Inventory summary
-- `GET /member-activity` - Member activity report
-- `GET /debt-aging` - Debt aging report
-- `GET /turnaround-metrics` - Turnaround metrics
-- `GET /dashboard-summary` - Dashboard summary
+### Reports Routes (`/api/reports/*`)
+- Analytics dashboard
+- Overdue tracking
+- Inventory reports
+- Member statistics
 
-## Permission Matrix
+### Search Routes (`/api/search/*`)
+- Global book search
+- Advanced filtering
 
-| Feature | Admin | Librarian | Student |
-|---------|-------|-----------|---------|
-| Create librarian | ✔️ | ❌ | ❌ |
-| Manage users | ✔️ | ❌ | ❌ |
-| Add/Edit/Delete books | ✔️ | ❌ | ❌ |
-| Checkout/Return books | ✔️ | ✔️ | ❌ |
-| View system reports | ✔️ | ❌ | ❌ |
-| View own loans | ✔️ | ✔️ | ✔️ |
-| View own fees | ✔️ | ✔️ | ✔️ |
-| Browse books | ✔️ | ✔️ | ✔️ |
+## 🗄️ Database Schema
 
-## Authentication
+### Core Tables
 
-All protected routes require a JWT token in the Authorization header:
+| Table | Purpose |
+|-------|---------|
+| `users` | User accounts with roles (Admin, Librarian, Student) |
+| `books` | Library inventory with metadata |
+| `loans` | Book borrowing transactions |
+| `fees` | Fine/penalty tracking system |
 
-```
-Authorization: Bearer <token>
-```
+### Key Features
 
-Login to get token:
+✅ Fuzzy search indexes for improved book discovery  
+✅ Stored procedures for complex transactions  
+✅ Database views for analytics and reporting  
+✅ User credential verification functions  
+✅ Automated overdue tracking  
+
+## 🧪 Testing
+
+### Backend Tests
+
 ```bash
-POST /api/auth/login
-{
-  "email": "user@example.com",
-  "password": "password"
-}
-```
+cd backend
 
-Response:
-```json
-{
-  "success": true,
-  "message": "Login successful",
-  "data": {
-    "token": "eyJhbGciOiJIUzI1NiIs...",
-    "user": {
-      "user_id": 1,
-      "email": "user@example.com",
-      "role": "student",
-      "full_name": "John Doe"
-    }
-  }
-}
-```
-
-## File Structure
-
-```
-backend/
-├── src/
-│   ├── config/
-│   │   ├── db.js          # Database connection pool
-│   │   └── env.js         # Environment variables
-│   ├── middleware/
-│   │   ├── auth.js        # JWT authentication
-│   │   └── requireRole.js # Role-based authorization
-│   ├── controllers/
-│   │   ├── authController.js
-│   │   ├── adminController.js
-│   │   ├── librarianController.js
-│   │   ├── studentController.js
-│   │   ├── circulationController.js
-│   │   └── reportsController.js
-│   ├── routes/
-│   │   ├── auth.routes.js
-│   │   ├── admin.routes.js
-│   │   ├── librarian.routes.js
-│   │   ├── student.routes.js
-│   │   ├── circulation.routes.js
-│   │   └── reports.routes.js
-│   ├── utils/
-│   │   ├── response.js    # Response formatting
-│   │   └── error.js       # Error handling
-│   ├── app.js             # Express app setup
-│   └── server.js          # Server startup
-├── .env.example           # Environment template
-├── package.json           # Dependencies
-└── README.md              # Documentation
-```
-
-## Database Schema Requirements
-
-The backend expects the following PostgreSQL schema and functions:
-
-**Tables**:
-- users (user_id, full_name, email, password_hash, role, is_active)
-- members (member_id, card_number, first_name, last_name, email, status)
-- books, book_copies, loans, loan_fees, member_alerts, etc.
-
-**Functions**:
-- fn_register_student_user()
-- fn_create_librarian_user()
-- fn_verify_user_credentials()
-- sp_checkout_book()
-- sp_return_book()
-- sp_generate_overdue_alerts()
-
-See the main project schema files for full details.
-
-## Error Handling
-
-All errors follow a consistent format:
-
-```json
-{
-  "success": false,
-  "message": "Error description",
-  "errors": null
-}
-```
-
-Common status codes:
-- 200: Success
-- 201: Created
-- 400: Bad Request
-- 401: Unauthorized
-- 403: Forbidden
-- 404: Not Found
-- 500: Server Error
-
-## Development
-
-### Running tests
-```bash
+# Unit & integration tests
 npm test
-```
 
-### Linting
-```bash
+# E2E tests with Playwright
+npm run test:e2e
+
+# ESLint code quality
 npm run lint
 ```
 
-### Environment Modes
-- `development`: Detailed logging
-- `production`: Optimized performance
+## 🔒 Security Features
 
-## License
+- JWT-based authentication with expiration
+- Password hashing with bcrypt
+- Role-based middleware authorization
+- Input validation and sanitization
+- CORS protection
+- Helmet security headers
+- SQL injection prevention (parameterized queries)
 
-MIT
+## 📝 Development Commands
+
+### Backend
+
+```bash
+cd backend
+
+npm run dev       # Development server with nodemon
+npm start         # Production start
+npm test          # Run tests
+npm run test:e2e  # E2E tests
+npm run lint      # ESLint check
+```
+
+## 🛠️ Technology Stack
+
+- **Backend**: Node.js, Express.js
+- **Database**: PostgreSQL 12+
+- **Authentication**: JWT (jsonwebtoken)
+- **Security**: bcrypt, Helmet
+- **Testing**: Jest, Playwright
+- **Code Quality**: ESLint
+
+## 📋 Workflow
+
+### Typical User Flows
+
+**Student Borrowing a Book:**
+1. Login with credentials
+2. Search for available books
+3. Submit checkout request
+4. System verifies availability
+5. Record loan in database
+6. Return capability enabled
+
+**Librarian Processing Return:**
+1. Student returns book
+2. Scan or enter book ID
+3. System calculates any fees
+4. Update loan status
+5. Calculate due dates for renewal
+
+**Admin Viewing Analytics:**
+1. Login as admin
+2. Access admin dashboard
+3. View inventory reports
+4. Monitor member activity
+5. Track overdue items and fees
+
+## 📞 Troubleshooting
+
+### Database Connection Issues
+- Verify PostgreSQL is running: `psql --version`
+- Check `.env` database credentials
+- Ensure database exists: `psql -l | grep library_db`
+
+### Port Already in Use
+```bash
+# Change PORT in .env or find process using port 5000
+lsof -i :5000  # macOS/Linux
+netstat -ano | findstr :5000  # Windows
+```
+
+### Missing Database Tables
+- Run initialization scripts again in order
+- Check `db/schema/00_init_schema.sql` exists
+- Verify `DB_SCHEMA=library_app` in `.env`
+
+## 📄 License
+
+This project is proprietary software for library management systems.
+
+## 👥 Contributing
+
+See `backend/README.md` for detailed backend documentation and contribution guidelines.
+
+---
+
+**Last Updated**: December 2024  
+**Version**: 1.0.0
