@@ -4,26 +4,6 @@
 
 SET search_path TO library_app;
 
--- Daily overdue list shared on the library WhatsApp group
-CREATE OR REPLACE VIEW vw_overdue_loans AS
-SELECT l.loan_id,
-       l.member_id,
-       m.first_name,
-       m.last_name,
-       m.email,
-       bc.barcode,
-       b.title,
-       l.checkout_date,
-       l.due_date,
-       (CURRENT_DATE - l.due_date) AS days_overdue
-FROM loans l
-JOIN members m ON m.member_id = l.member_id
-JOIN book_copies bc ON bc.copy_id = l.copy_id
-JOIN books b ON b.book_id = bc.book_id
-WHERE l.status IN ('ACTIVE','OVERDUE')
-  AND l.due_date < CURRENT_DATE
-  AND l.returned_date IS NULL;
-
 -- Inventory view used by campus teams to track copies
 CREATE OR REPLACE VIEW vw_inventory_summary AS
 SELECT b.book_id,

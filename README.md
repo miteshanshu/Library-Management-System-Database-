@@ -1,251 +1,313 @@
-# Library Management Database
+# Library Management System - RBAC Backend
+![Node.js](https://img.shields.io/badge/Node.js-16+-green)
+![Express](https://img.shields.io/badge/Express.js-Backend-black)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-12+-blue)
+![JWT](https://img.shields.io/badge/Auth-JWT-orange)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow)
+![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen)
+![Status](https://img.shields.io/badge/Status-Active-success)
+Complete Role-Based Access Control (RBAC) backend for the Library Management System with PostgreSQL.
 
 ## Overview
-- **Purpose**: End-to-end PostgreSQL schema, seeds, views, and procedures for campus-scale library circulation.
-- **Engine**: PostgreSQL 14+ with objects scoped to `library_app`.
-- **Author**: Mitesh Kumar Anshu.
 
-## Directory Map
-- **db/schema**: Base tables, constraints, triggers.
-- **db/views**: Analytics-facing materialized logic.
-- **db/procedures**: Circulation, overdue, and fee workflows.
-- **db/seeds**: Demo catalog, members, and inventory.
-- **db/reports**: Ready-made operational SQL extracts.
+This backend implements a three-tier role-based access control system:
+- **Admin**: Full system management and oversight
+- **Librarian**: Circulation operations and daily management
+- **Student**: Self-service borrowing and personal account management
 
-## Prerequisites
-1. Install PostgreSQL 14 or newer.
-2. Ensure a superuser (or equivalent) role for schema creation.
-3. Create a target database, e.g. `library_db`.
-4. Export environment variables for non-interactive commands: `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`.
+## Features
 
-## Database Provisioning
+✅ JWT-based authentication  
+✅ Role-based authorization middleware  
+✅ PostgreSQL integration with stored procedures  
+✅ Comprehensive RBAC implementation  
+✅ Error handling and validation  
+✅ RESTful API design  
 
-### 1. Initialize Core Schema
+## 🏗️ System Architecture
+
+```plaintext
+                 ┌────────────────────────────┐
+                 │        Frontend App        │
+                 │ (React, Next.js, Mobile)   │
+                 └──────────────┬─────────────┘
+                                │ REST API
+                                ▼
+        ┌─────────────────────────────────────────────────┐
+        │                Express Backend                   │
+        │─────────────────────────────────────────────────│
+        │  Routing Layer                                   │
+        │   - auth.routes.js                               │
+        │   - admin.routes.js                              │
+        │   - librarian.routes.js                          │
+        │   - student.routes.js                            │
+        │   - circulation.routes.js                        │
+        │   - reports.routes.js                            │
+        │-------------------------------------------------│
+        │  Middleware                                      │
+        │   - JWT Authentication                           │
+        │   - Role Authorization                           │
+        │-------------------------------------------------│
+        │  Controllers                                     │
+        │   - Auth / Admin / Librarian / Student           │
+        │   - Circulation / Reports                        │
+        │-------------------------------------------------│
+        │  Database Layer                                  │
+        │   - PostgreSQL (library_app schema)              │
+        │   - Stored Procedures & Functions                │
+        └───────────────────────────────┬──────────────────┘
+                                        │
+                                        ▼
+                          ┌─────────────────────────┐
+                          │     PostgreSQL DB       │
+                          │  Users / Books / Loans  │
+                          │  Copies / Alerts / Fees │
+                          └─────────────────────────┘
+                          
+## Installation
+
+### Prerequisites
+- Node.js 14+ and npm
+- PostgreSQL 12+
+- Existing library_app schema with tables and functions
+
+### Steps
+
+1. Install dependencies:
 ```bash
-psql -d library_db -f db/schema/00_init_schema.sql
-```
-**Expected output**
-```
-SET
-SET
-CREATE SCHEMA
-SET
-CREATE TABLE
-CREATE TABLE
-CREATE TABLE
-CREATE TABLE
-CREATE TABLE
-CREATE TABLE
-CREATE TABLE
-CREATE TABLE
-CREATE TABLE
-CREATE TABLE
-CREATE TABLE
-CREATE TABLE
-CREATE TABLE
+npm install
 ```
 
-### 2. Apply Constraints, Indexes, and Triggers
+2. Create `.env` file from `.env.example`:
 ```bash
-psql -d library_db -f db/schema/01_constraints_indexes.sql
-```
-**Expected output**
-```
-SET
-CREATE INDEX
-CREATE INDEX
-CREATE INDEX
-CREATE INDEX
-CREATE INDEX
-CREATE INDEX
-CREATE INDEX
-CREATE FUNCTION
-CREATE TRIGGER
-CREATE TRIGGER
-CREATE TRIGGER
-CREATE TRIGGER
+cp .env.example .env
 ```
 
-### 3. Create Analytics Views
+3. Configure environment variables in `.env`:
+```env
+PORT=5000
+NODE_ENV=development
+JWT_SECRET=your-secret-key
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=library_db
+DB_USER=postgres
+DB_PASSWORD=your_password
+DB_SCHEMA=library_app
+```
+
+4. Start the server:
 ```bash
-psql -d library_db -f db/views/analytics_views.sql
-```
-**Expected output**
-```
-SET
-CREATE VIEW
-CREATE VIEW
-CREATE VIEW
+npm start
 ```
 
-### 4. Install Circulation Procedures
+For development with auto-reload:
 ```bash
-psql -d library_db -f db/procedures/checkout_and_return.sql
-```
-**Expected output**
-```
-SET
-CREATE PROCEDURE
-CREATE PROCEDURE
+npm run dev
 ```
 
-### 5. Install Overdue and Fee Procedures
+## API Endpoints
+
+### Authentication (`/api/auth`)
+- `POST /login` - User login
+- `POST /register` - Student registration
+- `GET /me` - Get current user profile (requires auth)
+
+### Admin (`/api/admin`)
+- `POST /librarians` - Create librarian
+- `PATCH /librarians/:user_id` - Activate/deactivate librarian
+- `GET /users` - Get all users
+- `GET /login-list` - Get login activity list
+- `POST /books` - Add new book
+- `PATCH /books/:book_id` - Edit book details
+- `DELETE /books/:book_id` - Delete book
+- `POST /book-copies` - Add book copy
+- `PATCH /book-copies/:copy_id/status` - Update copy status
+- `PATCH /book-copies/:copy_id/location` - Set book location
+- `POST /membership-types` - Manage membership types
+- `PATCH /members/:member_id/override` - Override member status
+- `POST /fees/:fee_id/waive` - Waive fees
+- `POST /loans/:loan_id/force-close` - Force close loan
+
+### Librarian (`/api/librarian`)
+- `GET /students/search` - Search student by card or email
+- `GET /students/:member_id/loans` - View student loans
+- `GET /students/:member_id/overdue-loans` - View overdue loans
+- `GET /students/:member_id/fees` - View student fees
+- `GET /students/:member_id/alerts` - View student alerts
+- `GET /book-copies/:copy_id` - View copy status
+- `PATCH /book-copies/:copy_id/mark-available` - Mark copy available
+- `POST /alerts/generate-overdue` - Generate overdue alerts
+- `PATCH /alerts/:alert_id/resolve` - Mark alert resolved
+- `GET /books` - View books
+- `GET /books/:book_id/copies` - View book copies
+- `POST /scan-barcode` - Scan barcode
+
+### Student (`/api/student`)
+- `GET /my-loans` - Get personal loans
+- `GET /my-overdue-loans` - Get overdue loans
+- `GET /my-fees` - Get personal fees
+- `GET /my-alerts` - Get personal alerts
+- `GET /payment-history` - Get payment history
+- `GET /browse-books` - Browse library books
+- `GET /books/:book_id` - Get book details
+- `GET /books/:book_id/available-copies` - Check available copies
+
+### Circulation (`/api/circulation`) (Admin/Librarian only)
+- `POST /checkout` - Checkout book
+- `POST /return` - Return book
+- `GET /loans/:loan_id` - Get loan details
+- `GET /member/:member_id/loans` - Get member loans
+- `GET /member/:member_id/active-loans` - Get active loans
+- `GET /copy/:copy_id/history` - Get copy history
+
+### Reports (`/api/reports`) (Admin only)
+- `GET /overdue` - Overdue report
+- `GET /circulation` - Circulation report
+- `GET /inventory` - Inventory summary
+- `GET /member-activity` - Member activity report
+- `GET /debt-aging` - Debt aging report
+- `GET /turnaround-metrics` - Turnaround metrics
+- `GET /dashboard-summary` - Dashboard summary
+
+## Permission Matrix
+
+| Feature | Admin | Librarian | Student |
+|---------|-------|-----------|---------|
+| Create librarian | ✔️ | ❌ | ❌ |
+| Manage users | ✔️ | ❌ | ❌ |
+| Add/Edit/Delete books | ✔️ | ❌ | ❌ |
+| Checkout/Return books | ✔️ | ✔️ | ❌ |
+| View system reports | ✔️ | ❌ | ❌ |
+| View own loans | ✔️ | ✔️ | ✔️ |
+| View own fees | ✔️ | ✔️ | ✔️ |
+| Browse books | ✔️ | ✔️ | ✔️ |
+
+## Authentication
+
+All protected routes require a JWT token in the Authorization header:
+
+```
+Authorization: Bearer <token>
+```
+
+Login to get token:
 ```bash
-psql -d library_db -f db/procedures/overdue_and_fees.sql
-```
-**Expected output**
-```
-SET
-CREATE PROCEDURE
-CREATE PROCEDURE
-CREATE PROCEDURE
+POST /api/auth/login
+{
+  "email": "user@example.com",
+  "password": "password"
+}
 ```
 
-### 6. Load Sample Data
+Response:
+```json
+{
+  "success": true,
+  "message": "Login successful",
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIs...",
+    "user": {
+      "user_id": 1,
+      "email": "user@example.com",
+      "role": "student",
+      "full_name": "John Doe"
+    }
+  }
+}
+```
+
+## File Structure
+
+```
+backend/
+├── src/
+│   ├── config/
+│   │   ├── db.js          # Database connection pool
+│   │   └── env.js         # Environment variables
+│   ├── middleware/
+│   │   ├── auth.js        # JWT authentication
+│   │   └── requireRole.js # Role-based authorization
+│   ├── controllers/
+│   │   ├── authController.js
+│   │   ├── adminController.js
+│   │   ├── librarianController.js
+│   │   ├── studentController.js
+│   │   ├── circulationController.js
+│   │   └── reportsController.js
+│   ├── routes/
+│   │   ├── auth.routes.js
+│   │   ├── admin.routes.js
+│   │   ├── librarian.routes.js
+│   │   ├── student.routes.js
+│   │   ├── circulation.routes.js
+│   │   └── reports.routes.js
+│   ├── utils/
+│   │   ├── response.js    # Response formatting
+│   │   └── error.js       # Error handling
+│   ├── app.js             # Express app setup
+│   └── server.js          # Server startup
+├── .env.example           # Environment template
+├── package.json           # Dependencies
+└── README.md              # Documentation
+```
+
+## Database Schema Requirements
+
+The backend expects the following PostgreSQL schema and functions:
+
+**Tables**:
+- users (user_id, full_name, email, password_hash, role, is_active)
+- members (member_id, card_number, first_name, last_name, email, status)
+- books, book_copies, loans, loan_fees, member_alerts, etc.
+
+**Functions**:
+- fn_register_student_user()
+- fn_create_librarian_user()
+- fn_verify_user_credentials()
+- sp_checkout_book()
+- sp_return_book()
+- sp_generate_overdue_alerts()
+
+See the main project schema files for full details.
+
+## Error Handling
+
+All errors follow a consistent format:
+
+```json
+{
+  "success": false,
+  "message": "Error description",
+  "errors": null
+}
+```
+
+Common status codes:
+- 200: Success
+- 201: Created
+- 400: Bad Request
+- 401: Unauthorized
+- 403: Forbidden
+- 404: Not Found
+- 500: Server Error
+
+## Development
+
+### Running tests
 ```bash
-psql -d library_db -f db/seeds/sample_data.sql
-```
-**Expected output**
-```
-SET
-INSERT 0 4
-INSERT 0 4
-INSERT 0 6
-INSERT 0 5
-INSERT 0 6
-INSERT 0 6
-INSERT 0 24
+npm test
 ```
 
-### 7. Run Operational Reports (Optional)
+### Linting
 ```bash
-psql -d library_db -f db/reports/inventory_and_member_reports.sql
-```
-**Expected output**
-```
-SET
-        title         | overdue_count |      member_list      
-----------------------+---------------+-----------------------
- Smart Cities and You |             0 | {}
-(1 row)
-
- member_id | first_name | last_name | due_0_7 | due_8_14 | due_15_plus | partial_balance 
------------+------------+-----------+---------+----------+-------------+-----------------
-         1 | Aarav      | Mehta     |    0.00 |     0.00 |        0.00 |            0.00
-(1 row)
-
-                title                | avg_turnaround_days | loans_tracked 
--------------------------------------+---------------------+---------------
- Stories from the Konkan Coast       |                   0 |             0
-(1 row)
+npm run lint
 ```
 
-## Data Model Highlights
-- **Memberships** (`db/schema/00_init_schema.sql:9`): Borrowing tiers with limits, loan durations, and late-fee policies.
-- **Catalog** (`db/schema/00_init_schema.sql:62`): `books`, `authors`, `genres`, and join tables supporting multi-author, multi-genre tagging.
-- **Inventory** (`db/schema/00_init_schema.sql:100`): `book_copies` tracks status, location, and lifecycle timestamps.
-- **Circulation** (`db/schema/00_init_schema.sql:115`): `loans`, `loan_fees`, `fee_payments`, and `member_alerts` enforce tracking and accountability.
-- **Integrity** (`db/schema/01_constraints_indexes.sql:8`): Partial unique indexes prevent duplicate primaries and parallel loans; triggers refresh `updated_at` automatically.
+### Environment Modes
+- `development`: Detailed logging
+- `production`: Optimized performance
 
-## Views
-- **`vw_overdue_loans`** (`db/views/analytics_views.sql:8`): Lists active overdue items with borrower contact info.
-- **`vw_inventory_summary`** (`db/views/analytics_views.sql:28`): Aggregates copy statuses per title for shelf audits.
-- **`vw_member_activity`** (`db/views/analytics_views.sql:42`): Summarizes active and lifetime loans alongside outstanding fees.
+## License
 
-## Stored Procedures
-- **`sp_checkout_book`** (`db/procedures/checkout_and_return.sql:7`): Locks the copy, validates member eligibility, and inserts a loan.
-- **`sp_return_book`** (`db/procedures/checkout_and_return.sql:90`): Marks returns, restores copy availability, closes alerts, and raises late fees.
-- **`sp_refresh_overdue_status`** (`db/procedures/overdue_and_fees.sql:7`): Flags loans past due as overdue.
-- **`sp_generate_overdue_alerts`** (`db/procedures/overdue_and_fees.sql:25`): Creates member alerts after refreshing statuses.
-- **`sp_apply_fee_payment`** (`db/procedures/overdue_and_fees.sql:55`): Records payments and updates fee status.
-
-## Common Operations
-
-### Checkout Flow
-```bash
-psql -d library_db -c "CALL library_app.sp_checkout_book(1, 'BC1-01', DATE '2024-08-01');"
-```
-**Expected output**
-```
-CALL
-```
-
-### Verify Active Loan
-```bash
-psql -d library_db -c "SELECT loan_id, status, due_date FROM library_app.loans WHERE member_id = 1 ORDER BY loan_id DESC LIMIT 1;"
-```
-**Expected output**
-```
- loan_id | status |  due_date  
----------+--------+------------
-       1 | ACTIVE | 2024-08-15
-(1 row)
-```
-
-### Return Flow
-```bash
-psql -d library_db -c "CALL library_app.sp_return_book(1, DATE '2024-08-10');"
-```
-**Expected output**
-```
-CALL
-```
-
-### Check Return Status
-```bash
-psql -d library_db -c "SELECT status, returned_date FROM library_app.loans WHERE loan_id = 1;"
-```
-**Expected output**
-```
- status  | returned_date 
----------+---------------
- RETURNED | 2024-08-10
-(1 row)
-```
-
-### Refresh Overdue Pipeline
-```bash
-psql -d library_db -c "CALL library_app.sp_generate_overdue_alerts(CURRENT_DATE);"
-```
-**Expected output**
-```
-CALL
-```
-
-### Apply Late Fee Payment
-```bash
-psql -d library_db -c "CALL library_app.sp_apply_fee_payment(1, 50.00, 'UPI', 'TXN123');"
-```
-**Expected output**
-```
-CALL
-```
-
-### Inventory Summary Snapshot
-```bash
-psql -d library_db -c "SELECT title, total_copies, available_copies, loaned_copies, maintenance_copies, lost_copies FROM library_app.vw_inventory_summary ORDER BY title;"
-```
-**Expected output**
-```
-                 title                 | total_copies | available_copies | loaned_copies | maintenance_copies | lost_copies 
---------------------------------------+--------------+------------------+---------------+--------------------+-------------
- Campus Leadership Playbook           |            4 |                4 |             0 |                  0 |           0
- Echoes of the Maurya Trail           |            4 |                4 |             0 |                  0 |           0
- Practical Robotics for Campus Clubs  |            4 |                4 |             0 |                  0 |           0
- Smart Cities and You                 |            4 |                4 |             0 |                  0 |           0
- Stories from the Konkan Coast        |            4 |                4 |             0 |                  0 |           0
- Yuva Minds: Essays by Indian Students|            4 |                4 |             0 |                  0 |           0
-(6 rows)
-```
-
-## Seed Data Snapshot
-- **Membership Types**: Student, Research Scholar, Faculty, Alumni.
-- **Publishers**: Pragati Prakashan, Lotus Leaf Media, Kaveri Books, Narmada House.
-- **Catalog**: Six Indian-context titles mapped to matching authors and genres.
-- **Inventory**: Four barcoded copies per title, distributed across campus locations.
-- **Members**: Twenty-four active student records for workflow testing.
-
-## Troubleshooting
-1. **Permission errors**: Confirm the role can create schemas and execute PL/pgSQL.
-2. **Duplicate inserts**: Scripts use `ON CONFLICT DO NOTHING`; rerunning is idempotent.
-3. **Timezone-sensitive dates**: Procedures default to `CURRENT_DATE`; pass explicit dates to avoid drift.
+MIT
