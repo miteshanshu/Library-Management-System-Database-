@@ -1,4 +1,11 @@
 # Library Management System - Complete Project
+![Node.js](https://img.shields.io/badge/Node.js-16+-green)
+![Express](https://img.shields.io/badge/Express.js-Backend-black)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-12+-blue)
+![JWT](https://img.shields.io/badge/Auth-JWT-orange)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow)
+![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen)
+![Status](https://img.shields.io/badge/Status-Active-success)
 
 A comprehensive **Role-Based Access Control (RBAC) library management system** with PostgreSQL database and Node.js/Express REST API backend.
 
