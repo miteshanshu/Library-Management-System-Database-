@@ -1,5 +1,4 @@
 {
-    "zencoder.mcpServers": {
         "playwright": {
             "command": "npx",
             "args": [
