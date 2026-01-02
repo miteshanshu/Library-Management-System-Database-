@@ -113,7 +113,12 @@ const browseBooks = async (req, res, next) => {
   try {
     const { limit = 50, offset = 0, search, genre_id, author_id } = req.query;
 
-    let query = `SELECT DISTINCT b.*, p.publisher_name FROM ${env.DB_SCHEMA}.books b LEFT JOIN ${env.DB_SCHEMA}.publishers p ON b.publisher_id = p.publisher_id`;
+    let query = `SELECT DISTINCT b.*, p.publisher_name, 
+                 CAST(COALESCE(AVG(r.rating), 0) AS NUMERIC(3,1)) as avg_rating, 
+                 COUNT(DISTINCT r.review_id) as review_count
+                 FROM ${env.DB_SCHEMA}.books b 
+                 LEFT JOIN ${env.DB_SCHEMA}.publishers p ON b.publisher_id = p.publisher_id
+                 LEFT JOIN reviews r ON b.book_id = r.book_id`;
     const params = [];
     let paramIndex = 1;
 
@@ -145,7 +150,7 @@ const browseBooks = async (req, res, next) => {
       paramIndex++;
     }
 
-    query += ` ORDER BY b.created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    query += ` GROUP BY b.book_id, p.publisher_id, p.publisher_name ORDER BY b.created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     params.push(limit);
     params.push(offset);
 

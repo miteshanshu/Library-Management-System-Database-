@@ -103,7 +103,7 @@ const getTurnaroundMetrics = async (req, res, next) => {
 const getDashboardSummary = async (req, res, next) => {
   try {
     const summaries = await Promise.all([
-      pool.query(`SELECT COUNT(*) as count FROM ${env.DB_SCHEMA}.members`),
+      pool.query(`SELECT COUNT(*) as count FROM ${env.DB_SCHEMA}.users`),
       pool.query(`SELECT COUNT(*) as count FROM ${env.DB_SCHEMA}.books`),
       pool.query(`SELECT COUNT(*) as count FROM ${env.DB_SCHEMA}.book_copies WHERE status = $1`, ['AVAILABLE']),
       pool.query(`SELECT COUNT(*) as count FROM ${env.DB_SCHEMA}.loans WHERE status IN ($1, $2)`, ['ACTIVE', 'OVERDUE']),

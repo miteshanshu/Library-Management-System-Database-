@@ -124,8 +124,68 @@ const getCurrentUser = async (req, res, next) => {
   }
 };
 
+const updateProfile = async (req, res, next) => {
+  try {
+    const { full_name } = req.body;
+    const userId = req.user.user_id;
+
+    if (!full_name) {
+      return next(new ValidationError('Full name is required'));
+    }
+
+    const result = await pool.query(
+      `UPDATE ${env.DB_SCHEMA}.users SET full_name = $1 WHERE user_id = $2 RETURNING user_id, full_name, email, role, is_active`,
+      [full_name, userId]
+    );
+
+    sendSuccess(res, result.rows[0], 'Profile updated successfully', 200);
+  } catch (err) {
+    next(err);
+  }
+};
+
+const changePassword = async (req, res, next) => {
+  try {
+    const { current_password, new_password } = req.body;
+    const userId = req.user.user_id;
+
+    if (!current_password || !new_password) {
+      return next(new ValidationError('Current and new passwords are required'));
+    }
+
+    if (new_password.length < 6) {
+      return next(new ValidationError('New password must be at least 6 characters'));
+    }
+
+    // Verify current password
+    const verifyResult = await pool.query(
+      `SELECT 1 FROM ${env.DB_SCHEMA}.users 
+             WHERE user_id = $1 AND password_hash = crypt($2, password_hash)`,
+      [userId, current_password]
+    );
+
+    if (verifyResult.rows.length === 0) {
+      return next(new AuthenticationError('Invalid current password'));
+    }
+
+    // Update password
+    await pool.query(
+      `UPDATE ${env.DB_SCHEMA}.users 
+             SET password_hash = crypt($1, gen_salt('bf')) 
+             WHERE user_id = $2`,
+      [new_password, userId]
+    );
+
+    sendSuccess(res, null, 'Password changed successfully', 200);
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   login,
   registerStudent,
   getCurrentUser,
+  updateProfile,
+  changePassword
 };
