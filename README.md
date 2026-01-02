@@ -17,14 +17,6 @@ A production-ready library management platform supporting three user roles:
 - **Librarian**: Daily operations, inventory management, circulation
 - **Student**: Self-service borrowing, account management, book search
 
-## 📸 Screenshots
-
-| Login Screen | Student Dashboard |
-|:---:|:---:|
-| ![Login Screen](docs/images/login_screen.png) | ![Student Dashboard](docs/images/student_dashboard.png) |
-| **Admin Dashboard** | **Librarian Dashboard** |
-| ![Admin Dashboard](docs/images/admin_dashboard.png) | ![Librarian Dashboard](docs/images/librarian_dashboard.png) |
-
 ## 📁 Project Structure
 
 ```
@@ -343,5 +335,5 @@ See `backend/README.md` for detailed backend documentation and contribution guid
 
 ---
 
-**Last Updated**: December 2024  
+**Last Updated**: December 2025  
 **Version**: 1.0.0
