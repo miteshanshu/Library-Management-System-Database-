@@ -67,6 +67,21 @@ library-management/
 │   └── seeds/                     # Sample data for testing
 │       └── sample_data.sql
 │
+├── frontend/                       # React Frontend Application
+│   ├── src/
+│   │   ├── api/                   # Axios instances & API calls
+│   │   ├── components/            # Reusable UI components
+│   │   ├── pages/                 # Route components (Admin, Librarian, Student)
+│   │   ├── store/                 # Zustand state management
+│   │   ├── theme/                 # MUI theme configuration
+│   │   ├── routes/                # Role-based routing
+│   │   ├── App.jsx                # Main application component
+│   │   └── main.jsx               # Application entry point
+│   ├── public/                    # Static assets
+│   ├── index.html                 # HTML entry point
+│   ├── vite.config.js             # Vite configuration
+│   └── package.json               # Frontend dependencies
+│
 ├── .vscode/                        # VS Code settings
 ├── README.md                       # This file
 └── LICENSE
