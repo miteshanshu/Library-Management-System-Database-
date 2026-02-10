@@ -49,6 +49,7 @@ const login = async (req, res, next) => {
 };
 
 const registerStudent = async (req, res, next) => {
+  const client = await pool.connect();
   try {
     const { full_name, email, password } = req.body;
 
@@ -60,28 +61,57 @@ const registerStudent = async (req, res, next) => {
       return next(new ValidationError('Password must be at least 6 characters'));
     }
 
-    const result = await pool.query(
+    // RACE CONDITION FIX: Use explicit transaction with row-level locking
+    await client.query('BEGIN');
+
+    // Check email uniqueness with FOR UPDATE to prevent concurrent registrations
+    const existingUser = await client.query(
+      `SELECT user_id FROM ${env.DB_SCHEMA}.users WHERE email = $1 FOR UPDATE`,
+      [email]
+    );
+
+    if (existingUser.rows.length > 0) {
+      await client.query('ROLLBACK');
+      return next(new ValidationError('Email already registered'));
+    }
+
+    // Check in members table as well
+    const existingMember = await client.query(
+      `SELECT member_id FROM ${env.DB_SCHEMA}.members WHERE email = $1 FOR UPDATE`,
+      [email]
+    );
+
+    if (existingMember.rows.length > 0) {
+      await client.query('ROLLBACK');
+      return next(new ValidationError('Email already registered'));
+    }
+
+    const result = await client.query(
       `SELECT * FROM ${env.DB_SCHEMA}.fn_register_student_user($1, $2, $3)`,
       [full_name, email, password]
     );
 
     if (result.rows.length === 0) {
+      await client.query('ROLLBACK');
       return next(new ValidationError('Registration failed'));
     }
 
     const registration = result.rows[0];
 
-    const userResult = await pool.query(
+    const userResult = await client.query(
       `SELECT user_id, email, role, full_name FROM ${env.DB_SCHEMA}.users WHERE email = $1`,
       [email]
     );
 
     if (userResult.rows.length === 0) {
+      await client.query('ROLLBACK');
       return next(new ValidationError('User creation failed'));
     }
 
     const user = userResult.rows[0];
     const token = generateToken(user);
+
+    await client.query('COMMIT');
 
     sendSuccess(
       res,
@@ -100,10 +130,24 @@ const registerStudent = async (req, res, next) => {
       201
     );
   } catch (err) {
+    await client.query('ROLLBACK');
+    
+    // Handle lock timeout errors (PostgreSQL error code 55P03)
+    if (err.code === '55P03') {
+      return next(new ValidationError('Another registration is in progress. Please try again.'));
+    }
+    
+    // Handle unique constraint violations (PostgreSQL error code 23505)
+    if (err.code === '23505') {
+      return next(new ValidationError('Email already registered'));
+    }
+    
     if (err.message.includes('already registered') || err.message.includes('Email already')) {
       return next(new ValidationError('Email already registered'));
     }
     next(err);
+  } finally {
+    client.release();
   }
 };
 
