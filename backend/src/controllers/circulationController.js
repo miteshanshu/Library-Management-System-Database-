@@ -18,6 +18,11 @@ const checkoutBook = async (req, res, next) => {
 
     sendSuccess(res, { message: 'Book checked out successfully' }, 'Checkout successful', 201);
   } catch (err) {
+    // Handle lock timeout errors (PostgreSQL error code 55P03)
+    if (err.code === '55P03') {
+      return next(new ValidationError('This book is being checked out by another user. Please try again.'));
+    }
+    
     if (err.message.includes('already loaned') || err.message.includes('not available') || err.message.includes('Copy')) {
       return next(new ValidationError(err.message));
     }
@@ -57,12 +62,15 @@ const issueBook = async (req, res, next) => {
       return next(new ValidationError(`Member account is ${member.status}. Cannot issue book`));
     }
 
+    // RACE CONDITION FIX: Add FOR UPDATE NOWAIT to lock the book_copies row
+    // This prevents concurrent checkouts of the same book copy
     const copyCheck = await client.query(
       `SELECT bc.copy_id, bc.book_id, bc.status, bc.barcode, b.title, b.isbn, l.location_name
        FROM ${env.DB_SCHEMA}.book_copies bc
        JOIN ${env.DB_SCHEMA}.books b ON bc.book_id = b.book_id
        LEFT JOIN ${env.DB_SCHEMA}.library_locations l ON bc.location_id = l.location_id
-       WHERE bc.barcode = $1`,
+       WHERE bc.barcode = $1
+       FOR UPDATE NOWAIT`,
       [barcode]
     );
 
@@ -153,6 +161,12 @@ const issueBook = async (req, res, next) => {
   } catch (err) {
     await client.query('ROLLBACK');
     console.error('Issue Book Error:', err);
+    
+    // Handle lock timeout errors (PostgreSQL error code 55P03)
+    if (err.code === '55P03') {
+      return next(new ValidationError('This book is being checked out by another user. Please try again.'));
+    }
+    
     next(err);
   } finally {
     client.release();
@@ -174,6 +188,11 @@ const returnBook = async (req, res, next) => {
 
     sendSuccess(res, { message: 'Book returned successfully' }, 'Return successful', 200);
   } catch (err) {
+    // Handle lock timeout errors (PostgreSQL error code 55P03)
+    if (err.code === '55P03') {
+      return next(new ValidationError('This loan is being processed by another user. Please try again.'));
+    }
+    
     if (err.message.includes('not found') || err.message.includes('closed')) {
       return next(new ValidationError(err.message));
     }

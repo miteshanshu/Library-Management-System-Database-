@@ -21,12 +21,12 @@ DECLARE
     v_loan_period INT;
     v_due_date DATE;
 BEGIN
-    -- Lock the copy row so two users do not grab the same book
+    -- RACE CONDITION FIX: Lock the copy row with NOWAIT to fail fast if another user is checking out
     SELECT copy_id, status
     INTO v_copy_id, v_copy_status
     FROM book_copies
     WHERE barcode = p_copy_barcode
-    FOR UPDATE;
+    FOR UPDATE NOWAIT;
 
     IF NOT FOUND THEN
         RAISE EXCEPTION 'Copy % not found', p_copy_barcode;
@@ -104,12 +104,12 @@ DECLARE
     v_overdue_days INT;
     v_fee_amount NUMERIC(10,2);
 BEGIN
-    -- Lock the loan row so two returns do not collide
+    -- RACE CONDITION FIX: Lock the loan row with NOWAIT to prevent concurrent returns
     SELECT copy_id, member_id, due_date, status
     INTO v_copy_id, v_member_id, v_due_date, v_status
     FROM loans
     WHERE loan_id = p_loan_id
-    FOR UPDATE;
+    FOR UPDATE NOWAIT;
 
     IF NOT FOUND THEN
         RAISE EXCEPTION 'Loan % not found', p_loan_id;
